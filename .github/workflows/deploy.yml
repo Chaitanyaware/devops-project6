@@ -1,0 +1,38 @@
+
+name: Build and Deploy Docker Website
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t devops-website:latest .
+
+      - name: Stop old container
+        run: |
+          docker rm -f devops-web || true
+
+      - name: Deploy new container
+        run: |
+          docker run -d \
+            --name devops-web \
+            --restart unless-stopped \
+            -p 8080:80 \
+            devops-website:latest
+
+      - name: Verify deployment
+        run: |
+          sleep 3
+          curl --fail http://localhost:8080
